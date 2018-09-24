@@ -1,0 +1,99 @@
+/* 
+ * © Copyright 2018 Phillip Walters, All Rights Reserved.
+ * 
+ * HTML, CSS, and Javascript programmed by Phillip Walters. */
+
+.tStyle1
+{
+background:red;
+border: 1px solid black;
+box-shadow:  5px 5px 5px #888888;
+
+
+width:20px;
+height:20px;
+}
+
+.tStyle2
+{
+background:blue;
+border: 1px solid black;
+box-shadow:  5px 5px 5px #888888;;
+
+width:20px;
+height:20px;
+
+}
+
+.tStyle3
+{
+background:green;
+border: 1px solid black;
+box-shadow:  5px 5px 5px #888888;;
+
+width:20px;
+height:20px;
+
+}
+
+.tStyle4
+{
+background:purple;
+border: 1px solid black;
+box-shadow:  5px 5px 5px #888888;
+
+width:20px;
+height:20px;
+}
+
+.tStyle5
+{
+background:orange;
+border: 1px solid black;
+box-shadow:  5px 5px 5px #888888;
+
+width:20px;
+height:20px;
+
+}
+
+.tStyle6
+{
+background:yellow;
+border: 1px solid black;
+box-shadow:  5px 5px 5px #888888;
+
+width:20px;
+height:20px;
+
+}
+
+.tStyle7
+{
+background:brown;
+border: 1px solid black;
+box-shadow:  5px 5px 5px #888888;
+
+width:20px;
+height:20px;
+
+}
+
+.tStyle8
+{
+border: 1px dotted black;
+
+width:20px;
+height:20px;
+}
+
+
+.tStyle9
+{
+border: 1px solid transparent;
+
+width:20px;
+height:20px;
+}
+
+
