@@ -96,4 +96,15 @@ width:20px;
 height:20px;
 }
 
+#caption
+{
+background: yellow;
+border: 1px solid transparent;
+box-shadow:  0px 5px 5px #888888;
+cursor: pointer;
+}
+
+
+
+
 

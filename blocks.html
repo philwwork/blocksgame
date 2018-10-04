@@ -23,11 +23,13 @@ HTML, CSS, and Javascript programmed by Phillip Walters.
 
 <div style="width:15%; float:left;">
 <div>
-<table>
+<table id="typeBoard">
 <caption>Tetrad type</caption>
-<tr> <td class="tStyle1"></td> <td></td> 				  <td></td> <td></td> </tr>
-<tr> <td class="tStyle1"></td> <td class="tStyle1"> </td> <td></td> <td></td> </tr>
-<tr> <td></td>			       <td class="tStyle1"> </td> <td></td> <td></td> </tr>
+<tr> <td class="tStyle1"></td> <td class="tStyle8"></td> <td class="tStyle8"></td> <td class="tStyle8"></td> </tr>
+<tr> <td class="tStyle1"></td> <td class="tStyle1"></td> <td class="tStyle8"></td> <td class="tStyle8"></td> </tr>
+<tr> <td class="tStyle8"></td> <td class="tStyle1"></td> <td class="tStyle8"></td> <td class="tStyle8"></td> </tr>
+<tr> <td class="tStyle8"></td> <td class="tStyle8"></td> <td class="tStyle8"></td> <td class="tStyle8"></td> </tr>
+
 </table>
 </div>
 
@@ -35,28 +37,36 @@ HTML, CSS, and Javascript programmed by Phillip Walters.
 <div>
 <table>
 <caption>Tetrad type</caption>
-<tr><td class="tStyle2"></td> <td></td> <td></td> <td></td> </tr>
-<tr><td class="tStyle2"></td> <td></td> <td></td> <td></td> </tr>
-<tr><td class="tStyle2"></td> <td></td> <td></td> <td></td> </tr>
-<tr><td class="tStyle2"></td> <td></td> <td></td> <td></td> </tr>
+
+<tr> <td class="tStyle2"></td> <td class="tStyle8"></td> <td class="tStyle8"></td> <td class="tStyle8"></td> </tr>
+<tr> <td class="tStyle2"></td> <td class="tStyle8"></td> <td class="tStyle8"></td> <td class="tStyle8"></td> </tr>
+<tr> <td class="tStyle2"></td> <td class="tStyle8"></td> <td class="tStyle8"></td> <td class="tStyle8"></td> </tr>
+<tr> <td class="tStyle2"></td> <td class="tStyle8"></td> <td class="tStyle8"></td> <td class="tStyle8"></td> </tr>
 </table>
 </div>
 
 <div>
 <table>
 <caption>Tetrad type</caption>
-<tr> <td></td> 				   <td class="tStyle3"></td> <td></td> <td></td> </tr>
-<tr> <td class="tStyle3"></td> <td class="tStyle3"></td> <td></td> <td></td> </tr>
-<tr> <td class="tStyle3"></td> <td></td> 				 <td></td> <td></td> </tr>
+<tr> <td class="tStyle8"></td> <td class="tStyle3"></td> <td class="tStyle8"></td> <td class="tStyle8"></td> </tr>
+<tr> <td class="tStyle3"></td> <td class="tStyle3"></td> <td class="tStyle8"></td> <td class="tStyle8"></td> </tr>
+<tr> <td class="tStyle3"></td> <td class="tStyle8"></td> <td class="tStyle8"></td> <td class="tStyle8"></td> </tr>
+<tr> <td class="tStyle8"></td> <td class="tStyle8"></td> <td class="tStyle8"></td> <td class="tStyle8"></td> </tr>
+
 </table>
 </div>
 
 <div>
+
+
+
 <table>
 <caption>Tetrad 
 type</caption>
-<tr> <td></td> 				   <td class="tStyle4"></td> <td></td> 				   <td></td> </tr>
-<tr> <td class="tStyle4"></td> <td class="tStyle4"></td> <td class="tStyle4"></td> <td></td> </tr>
+<tr> <td class="tStyle8"></td> <td class="tStyle4"></td> <td class="tStyle8"></td> <td class="tStyle8"></td> </tr>
+<tr> <td class="tStyle4"></td> <td class="tStyle4"></td> <td class="tStyle4"></td> <td class="tStyle8"></td> </tr>
+<tr> <td class="tStyle8"></td> <td class="tStyle8"></td> <td class="tStyle8"></td> <td class="tStyle8"></td> </tr>
+<tr> <td class="tStyle8"></td> <td class="tStyle8"></td> <td class="tStyle8"></td> <td class="tStyle8"></td> </tr>
 </table>
 </div>
 
@@ -68,21 +78,23 @@ type</caption>
 
 
 </div>
+
 
 
 
 <div style="margin-left: 15%;">
 <div>
-<table onclick="startGame()" id="board" style="border: 1px solid black;box-shadow:5px 5px 5px #888888;">
-<caption>Click to start Blocks game.</caption>
+<table  id="board" onclick="no()" style="border: 1px solid black;box-shadow:5px 5px 5px #888888;">
+<caption id="caption" onclick="startGame(event)">Click here to start Blocks game.</caption>
 </table>
 </div>
+</div>
+
 
 
 </div>
 
-
-</div>
+<span style="border: 1px" ></span>
 
 
 <script src="./blocks.js">

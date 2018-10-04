@@ -6,6 +6,8 @@ HTML, CSS, and Javascript programmed by Phillip Walters.*/
 
 var boardWidth=10;
 var boardHeight=20;
+var score=0;
+var started=false;
 
 var redBlock=1;
 var blueBlock=2;
@@ -19,6 +21,12 @@ var emptyBlock=9;
 
 var table = document.getElementById("board");
 
+
+// Each string array represents a tetrad shape.
+// Each digit or space in a string array represents a pixel in the shape.
+
+// The digit corresponds to .tStyleN in the blocks.css file, where 'N' is the digit.
+// The value of N determines the color (and css) for the pixel.
 var shapeSet={
 "1a":        [" 11",
               "11 "],
@@ -105,7 +113,7 @@ type6: [shapeSet["6a"],shapeSet["6b"],shapeSet["6c"],shapeSet["6d"]],
 type7: [shapeSet["7a"],shapeSet["7b"],shapeSet["7c"],shapeSet["7d"]]
 }
 
-
+var caption = document.getElementById("caption");
 
 
 // Global variables maintaining the current tetrad and its current shape.
@@ -148,21 +156,93 @@ function initTable()
     addEventListener("keydown",function(event) {
 
     	if (over) return;
-    if (event.keyCode==17)
+    
+
+	// Ctrl
+	if (event.keyCode==17)
     changeCursor();
 
+	// Up
     if (event.keyCode==38)
     rotateCurrent();
-    if (event.keyCode==40)
+
+	// Down    
+	if (event.keyCode==40)
     moveTetrad(0,1);
-    if (event.keyCode==37)
+
+	// Left    
+	if (event.keyCode==37)
     moveTetrad(-1,0);
-    if (event.keyCode==39)
+
+	// Right    
+	if (event.keyCode==39)
     moveTetrad(1,0);
 
     });
 
 }
+
+
+
+var board={};
+
+board.width=0;
+board.height=0;
+board.tableModel = null;
+board.writeShape = function(shape,a,b)
+{
+	// a,b are offsets within the tableModel.
+
+	// Constraints:
+	// 0<=a<=(boardWidth-1)-shapeWidth
+	// 0<=b<=(boardHeight-1)-shapeHeight
+
+	for (var j=0; j<shape.length; j++)
+	{
+		for (var i=0; i<shape[j].length; i++)
+		{
+			var pixelType = shape[j][i];
+			
+			if (pixelType==" ") continue;			
+			this.tableModel.rows[j+b].cells[i+a].setAttribute("class","tStyle"+pixelType);
+		}
+	}
+}
+
+board.fill = function(pixelType)
+{
+	for (var j=0;j<this.height;j++)
+	{
+		for (var i=0; i<this.width;i++)
+		{
+			this.tableModel.rows[j].cells[i].setAttribute("class", "tStyle"+pixelType);
+		}
+	}
+}
+
+board.erase = function()
+{
+	this.fill(8);
+}
+
+
+
+
+
+function setTypeBoard()
+{
+	var aBoard= Object.create(board);
+
+	aBoard.tableModel=document.getElementById("typeBoard");
+	aBoard.width=4;
+	aBoard.height=4;
+
+	shape = getCurrentShape();
+
+	aBoard.erase();
+	aBoard.writeShape(shape,0,0);
+}
+
 
 function changeCursor()
 {
@@ -215,14 +295,36 @@ function getCurrentShape()
 
 
 
+function no()
+{
+	if (started)
+		return;
+	caption.innerText="No really, click here.";
+}
+
 
 // Test function to get the process started.
 // This will need to be changed to something more elegant.
-function startGame()
+function startGame(event)
 {
-	
+	event.stopPropagation();
+
+
+
+
+
+	if (started)
+		return;
+
+	started=true;
+
+	writeScore(0);
+
+
+		
+
 	addTetrad();
-	
+
 	
     var delay = 800;
     
@@ -315,14 +417,14 @@ function addTetrad()
     	return;
     }
     
-    
+    setTypeBoard();	
     render(cursorA,cursorB,shape);    
 }
 
 function gameOver()
 {
 	over=true;
-	console.log("game over");	
+	caption.innerText="Game Over: " + score;
 }
 
 function moveTetrad(a,b)
@@ -495,7 +597,7 @@ var currentShape = getCurrentShape();
 var startingRow = cursorB + currentShape.length-1;
 var numRows=currentShape.length;
 
-
+var scoreRows=0;
 
 while (numRows>0)
 {
@@ -503,6 +605,7 @@ while (numRows>0)
 	if (checkRow(startingRow))
 	{
 		removeRow(startingRow);
+		scoreRows++;
 	}
 	else
 	{
@@ -511,6 +614,9 @@ while (numRows>0)
 
 	numRows--;
 } 
+
+if (scoreRows>0)
+	updateScore(scoreRows);
 
 } 
 
@@ -557,6 +663,44 @@ function removeRow(row)
 	}
 }
 
+
+
+function updateScore(scoreRows)
+{
+	var scoreDelta=0;
+
+	// 100, 300, 900, 2700
+	switch (scoreRows)
+	{
+		case 1: 
+		scoreDelta=100;
+		break;
+		
+		case 2:
+		scoreDelta=300;
+		break;
+		
+		case 3: 
+		scoreDelta=900;
+		break; 
+
+		case 4:
+		scoreDelta=2700;
+		break;
+
+		default:
+		break;
+	}
+
+	score+=scoreDelta;
+	writeScore(score);
+}
+
+
+function writeScore(score)
+{	
+	caption.innerText="Score: " + score;
+}
 
 // Should return a text value from 1-10 corresponding to cell color styles.
 function readPixel(a,b)
