@@ -25,8 +25,8 @@ var table = document.getElementById("board");
 // Each string array represents a tetrad shape.
 // Each digit or space in a string array represents a pixel in the shape.
 
-// The digit corresponds to .tStyleN in the blocks.css file, where 'N' is the digit.
-// The value of N determines the color (and css) for the pixel.
+// The digit corresponds to ".tStyleN" in the blocks.css file, where 'N' is the digit.
+// The value of 'N' determines the color (and css) for the pixel.
 var shapeSet={
 "1a":        [" 11",
               "11 "],
@@ -184,12 +184,12 @@ function initTable()
 
 
 
-var board={};
+var boardProto={};
 
-board.width=0;
-board.height=0;
-board.tableModel = null;
-board.writeShape = function(shape,a,b)
+boardProto.width=0;
+boardProto.height=0;
+boardProto.tableModel = null;
+boardProto.writeShape = function(shape,a,b)
 {
 	// a,b are offsets within the tableModel.
 
@@ -209,29 +209,36 @@ board.writeShape = function(shape,a,b)
 	}
 }
 
-board.fill = function(pixelType)
+boardProto.fill = function(pixelType)
 {
 	for (var j=0;j<this.height;j++)
 	{
 		for (var i=0; i<this.width;i++)
 		{
-			this.tableModel.rows[j].cells[i].setAttribute("class", "tStyle"+pixelType);
+			this.writePixel(j,i,pixelType);
 		}
 	}
 }
 
-board.erase = function()
+boardProto.erase = function()
 {
 	this.fill(8);
 }
 
-
-
-
-
-function setTypeBoard()
+boardProto.writePixel=function(a,b,pixelType)
 {
-	var aBoard= Object.create(board);
+	this.tableModel.rows[b].cells[a].setAttribute("class", "tStyle"+pixelType);
+}
+
+
+var blocksBoard = Object.create(boardProto);
+
+
+
+
+function setPreviewBoard()
+{
+	var aBoard= Object.create(boardProto);
 
 	aBoard.tableModel=document.getElementById("typeBoard");
 	aBoard.width=4;
@@ -266,19 +273,6 @@ function changeCursor()
 }
 
 
-function clearBoard()
-{
-    for (var i = 0; i < boardWidth; i++)
-    {
-        for (var j=0; j < boardHeight; j++)
-        {
-            write(i,j,emptyBlock);
-            
-        }
-    }
-
-}
-
 
 
 function random1to7()
@@ -303,7 +297,7 @@ function no()
 }
 
 
-// Test function to get the process started.
+// Function to get the process started.
 // This will need to be changed to something more elegant.
 function startGame(event)
 {
@@ -337,8 +331,6 @@ function startGame(event)
 		This is because the ticks keep getting smaller in size, and the speed increases with each tick. So towards the end the speed increases 
 		start happening faster and faster. What is needed is a predictable increase in speed based on total elapsed time. 
 	**/
-
-
     var mainThread = function () {
 	
 	ticks++;
@@ -357,7 +349,7 @@ function startGame(event)
     var shape=getCurrentShape();
 		
 		
-	if (cantRender(cursorA,(cursorB+1),shape))
+	if (isRenderFail(cursorA,(cursorB+1),shape))
 	{
 		
 		if (!over)
@@ -411,13 +403,13 @@ function addTetrad()
 	var shape=getCurrentShape();
 
     
-    if (cantRender(cursorA,cursorB,shape))
+    if (isRenderFail(cursorA,cursorB,shape))
     {
     	gameOver();
     	return;
     }
     
-    setTypeBoard();	
+    setPreviewBoard();	
     render(cursorA,cursorB,shape);    
 }
 
@@ -441,8 +433,8 @@ function moveTetrad(a,b)
     } 
 }
 
-
-function cantRender(a,b,shape)
+// Check for failure by testing superimposing the shape onto the board.
+function isRenderFail(a,b,shape)
 {
     if (a>=boardWidth || b >=boardHeight) 
 	{
@@ -518,7 +510,7 @@ else
     tetradShapeIndex++;
 
 nextShape=shapeArray[tetradShapeIndex];
-if (cantRender(cursorA,cursorB,nextShape))
+if (isRenderFail(cursorA,cursorB,nextShape))
 {
 	// undo the progression to the next shape.
 	if (tetradShapeIndex==0)
@@ -558,7 +550,7 @@ function move(a,b,aDiff,bDiff,shape)
 
     
 
-    if (cantRender(a+aDiff,b+bDiff,shape))
+    if (isRenderFail(a+aDiff,b+bDiff,shape))
     {
     	return false;
     }
@@ -735,7 +727,7 @@ function render(a,b,shape,clear)
                     if (clear)
                     {
                         pixelType=emptyBlock;
-                        isSelf=undefined;                        
+                        	isSelf=undefined;                        
                     }
                     else isSelf=true;
                     
