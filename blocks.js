@@ -19,8 +19,6 @@ var emptyBlock=9;
 
 
 
-var table = document.getElementById("board");
-
 
 // Each string array represents a tetrad shape.
 // Each digit or space in a string array represents a pixel in the shape.
@@ -128,21 +126,203 @@ var over;
 var cursorA=0;
 var cursorB=0;
 
-// Data set representing the current shape's board positions, so that collision detection does not affect the tetrad itself.
-var self=[];
+
+
+var boardProto={};
+
+boardProto.width=0;
+boardProto.height=0;
+boardProto.tableModel = null;
+boardProto.writeShape = function(a,b,shape)
+{
+	// a,b are offsets within the tableModel.
+
+	// Constraints:
+	// 0<=a<=(boardWidth-1)-shapeWidth
+	// 0<=b<=(boardHeight-1)-shapeHeight
+
+	for (var j=0; j<shape.length; j++)
+	{
+		for (var i=0; i<shape[j].length; i++)
+		{
+			var pixelType = shape[j][i];
+			
+			if (pixelType==" ") continue;			
+			
+			this.writePixel(i+a,j+b,pixelType);
+
+		}
+	}
+}
+
+boardProto.eraseShape = function(a,b,shape)
+{
+	// a,b are offsets within the tableModel.
+
+	// Constraints:
+	// 0<=a<=(boardWidth-1)-shapeWidth
+	// 0<=b<=(boardHeight-1)-shapeHeight
+
+	for (var j=0; j<shape.length; j++)
+	{
+		for (var i=0; i<shape[j].length; i++)
+		{
+			var pixelType = shape[j][i];
+			
+			if (pixelType==" ") continue;			
+			
+			this.writePixel(i+a,j+b,emptyBlock);
+
+		}
+	}
+}
+
+boardProto.fill = function(pixelType)
+{
+	for (var i=0;i<this.width;i++)
+	{
+		for (var j=0; j<this.height;j++)
+		{
+			this.writePixel(i,j,pixelType);
+		}
+	}
+}
+
+boardProto.eraseBoard = function()
+{
+	this.fill(9);
+}
+
+boardProto.writePixel=function(a,b,pixelType)
+{
+	this.tableModel.rows[b].cells[a].setAttribute("class", "tStyle"+pixelType);
+}
+
+boardProto.readPixel=function(a,b)
+{
+    var cellClass=blocksBoard.tableModel.rows[b].cells[a].className;
+    var pixelType=cellClass.charAt(cellClass.length-1);
+    return pixelType;
+}
+
+var blocksBoard = Object.create(boardProto);
+blocksBoard.tableModel = document.getElementById("board");
+blocksBoard.width=10;
+blocksBoard.height=20;
+
+blocksBoard.setReserved = function(a,b,trueOrFalse)
+{
+    var cell=blocksBoard.tableModel.rows[b].cells[a];
+    cell.setAttribute("reserved",trueOrFalse);
+}
+
+// Need this to tell where the tetrad piece is, kind of hard to tell it apart from the other blocks.
+// Reason is so the tetrad doesn't think it's colliding with itself. Might be an easier way to do this.
+blocksBoard.isReserved = function(a,b)
+{
+	var cell=blocksBoard.tableModel.rows[b].cells[a];
+	var reserved = cell.getAttribute("reserved");
+
+	return (reserved=="true")
+}
+
+// Definitely need to change this.
+blocksBoard.flushReserved = function()
+{
+	for (var j=0; j < blocksBoard.height; j++)
+	{
+		for (var i=0; i<blocksBoard.width; i++)
+		{
+			var cell=blocksBoard.tableModel.rows[j].cells[i];
+		    cell.setAttribute("reserved","false");
+		}
+	}
+
+
+}
+
+
+blocksBoard.reserveShape=function(a,b,shape)
+{
+	this.setReservedShape(a,b,shape,"true");
+}
+
+blocksBoard.unReserveShape=function(a,b,shape)
+{
+	this.setReservedShape(a,b,shape,"false");
+}
+
+blocksBoard.setReservedShape=function(a,b,shape,trueOrFalse)
+{
+    for (var j=0; j < shape.length; j++)
+    {
+        for (var i=0; i < shape[j].length; i++)
+        {
+            // You have to read the type data by row,column.
+            var pixelType = shape[j][i];
+            
+            if (pixelType!=" ")
+            {
+                var col = a+i;
+                var row = b+j;
+
+				// Legacy? This if test shouldn't be necessary.
+                if (col<boardWidth && row<boardHeight)
+                {
+                    this.setReserved(col,row,trueOrFalse);
+                }
+                
+            }
+           
+        }
+    }
+}
+
+blocksBoard.writeGameShape=function(a,b,shape)
+{
+		this.writeShape(a,b,shape);
+		this.reserveShape(a,b,shape);
+}
+
+blocksBoard.removeGameShape=function(a,b,shape)
+{
+		this.eraseShape(a,b,shape);
+		this.unReserveShape(a,b,shape);
+}
+
+
+// Coming replacement for the public variables about cursor movement and shape. 
+var tetradModel=Object.create(null);
+tetradModel.cursorA=0;
+tetradModel.cursorB=0;
+tetradModel.tetradType=1;
+tetradModel.tetradShapeIndex=0;
+tetradModel.getCurrentShape = function()
+{
+	var shapeArray = tetradShapeMap[tetradType];
+	return shapeArray[tetradShapeIndex];
+}
+
+
+
+
+
+
+
+
+
+
 
 window.onload=initTable();
 
 
 function initTable()
 {
-	table = document.getElementById("board");
-
 	// rows
 	for (var i=0; i < boardHeight; i++)
 	{
 
-		var row = table.insertRow(i);
+		var row = blocksBoard.tableModel.insertRow(i);
 
 		// columns
 		for (var j=0; j<boardWidth; j++)
@@ -154,7 +334,6 @@ function initTable()
 
 
     addEventListener("keydown",function(event) {
-
     	if (over) return;
     
 
@@ -184,58 +363,6 @@ function initTable()
 
 
 
-var boardProto={};
-
-boardProto.width=0;
-boardProto.height=0;
-boardProto.tableModel = null;
-boardProto.writeShape = function(shape,a,b)
-{
-	// a,b are offsets within the tableModel.
-
-	// Constraints:
-	// 0<=a<=(boardWidth-1)-shapeWidth
-	// 0<=b<=(boardHeight-1)-shapeHeight
-
-	for (var j=0; j<shape.length; j++)
-	{
-		for (var i=0; i<shape[j].length; i++)
-		{
-			var pixelType = shape[j][i];
-			
-			if (pixelType==" ") continue;			
-			this.tableModel.rows[j+b].cells[i+a].setAttribute("class","tStyle"+pixelType);
-		}
-	}
-}
-
-boardProto.fill = function(pixelType)
-{
-	for (var j=0;j<this.height;j++)
-	{
-		for (var i=0; i<this.width;i++)
-		{
-			this.writePixel(j,i,pixelType);
-		}
-	}
-}
-
-boardProto.erase = function()
-{
-	this.fill(8);
-}
-
-boardProto.writePixel=function(a,b,pixelType)
-{
-	this.tableModel.rows[b].cells[a].setAttribute("class", "tStyle"+pixelType);
-}
-
-
-var blocksBoard = Object.create(boardProto);
-
-
-
-
 function setPreviewBoard()
 {
 	var aBoard= Object.create(boardProto);
@@ -246,15 +373,15 @@ function setPreviewBoard()
 
 	shape = getCurrentShape();
 
-	aBoard.erase();
-	aBoard.writeShape(shape,0,0);
+	aBoard.fill(8);
+	aBoard.writeShape(0,0,shape);
 }
 
 
 function changeCursor()
 {
 	var shape = getCurrentShape();
-    remove(cursorA,cursorB,shape);
+    blocksBoard.removeGameShape(cursorA,cursorB,shape);
     
     var tetradIndex = tetradType.charAt(4);
     tetradIndex = Number(tetradIndex);
@@ -269,7 +396,8 @@ function changeCursor()
     tetradShapeIndex=0;
     shape = getCurrentShape();
 
-    render(cursorA,cursorB,shape);
+
+	blocksBoard.writeGameShape(cursorA,cursorB,shape);
 }
 
 
@@ -301,17 +429,17 @@ function no()
 // This will need to be changed to something more elegant.
 function startGame(event)
 {
+
+	// Stop the "no really" message from clicking on the table, from also happening.
 	event.stopPropagation();
 
 
-
-
-
+	// They keep clicking on it, ignore.
 	if (started)
 		return;
 
+	// Let's do this.
 	started=true;
-
 	writeScore(0);
 
 
@@ -321,7 +449,6 @@ function startGame(event)
 
 	
     var delay = 800;
-    
     var ticks=0;
 
     
@@ -334,38 +461,55 @@ function startGame(event)
     var mainThread = function () {
 	
 	ticks++;
+
+	// Adjust the speed about every 20 ticks of 800ms, however the 800ms declines and eventually you are adjusting the speed much faster.
 	if (ticks>20)
 	{
 		ticks=0;
-		if (delay>20)
+		
+		// Stop making it faster at 20ms
+		if (delay>=20)
 		{
+			// Otherwise remove 20ms at a time.
 			delay-=20;
-		}
-		
-		
+		}	
 	}	
 		
-	// stay current with the shape if it has rotated.
+	// Get the current shape (it could be rotated by the user's choice).
     var shape=getCurrentShape();
-		
-		
+	
+	// Prepare to move it down.	
+	
+	// Something is in the way, this one is part of the pile now.	
 	if (isRenderFail(cursorA,(cursorB+1),shape))
 	{
-		
+		blocksBoard.unReserveShape(cursorA,cursorB,shape);
+
+
 		if (!over)
 		{
+			// Score some block rows, and update the gui if applicable.
 			checkCompleteRow();
-			addTetrad();
-			setTimeout(mainThread,delay);
+			
 
+			// Start over with another piece.
+			addTetrad();
+			
+			// repeat the main thread next tick.						
+			setTimeout(mainThread,delay);
 			return;
 		}
+
+		// This doesn't make any sense. If it's game over by now then gameOver() was already called.
 		gameOver();
 	}
 
+	// Move it down.
 	else
 	{
 		moveTetrad(0,1);
+
+		// repeat the main thread next tick.
 		setTimeout(mainThread,delay);
 	
 	}
@@ -373,51 +517,63 @@ function startGame(event)
 	
 	};
 	
+	// Start the timer and the main thread.
 	setTimeout(mainThread,delay);
-	
 }
 
 
+/**
 
+
+
+*/
 function addTetrad()
 {
+	// Is this needed?
 	if (over)
 	{
 		console.log("Game over");
 		return;
 	}
 	
+	// Let's put it about here.
     cursorA=5;
     cursorB=0;
 
     
     
     // flush the cache of the previous tetrad if any.
-    for (var i in self)
-    {
-    	self[i]=undefined;
-    }
+	// Probably a more efficient way to do it is to just do the most recent tetrad that finished.
+	// blocksBoard.flushReserved();
+	
     
+	// Hook for preview.
     tetradType = "type" + random1to7();
     tetradShapeIndex = 0;
 	var shape=getCurrentShape();
 
     
+	// If the first thing that happens when you put a new tetrad out is a renderfail, that's game.
     if (isRenderFail(cursorA,cursorB,shape))
     {
     	gameOver();
     	return;
     }
     
-    setPreviewBoard();	
-    render(cursorA,cursorB,shape);    
+	// messing with the preview board.
+    setPreviewBoard();
+
+	// Do it.	
+    blocksBoard.writeGameShape(cursorA,cursorB,shape);    
 }
 
+// It is what it is.
 function gameOver()
 {
 	over=true;
 	caption.innerText="Game Over: " + score;
 }
+
 
 function moveTetrad(a,b)
 {
@@ -433,7 +589,7 @@ function moveTetrad(a,b)
     } 
 }
 
-// Check for failure by testing superimposing the shape onto the board.
+// Test if the shape will fit on the board.
 function isRenderFail(a,b,shape)
 {
     if (a>=boardWidth || b >=boardHeight) 
@@ -452,7 +608,7 @@ function isRenderFail(a,b,shape)
     {
         for (var i=0; i < shape[j].length; i++)
         {
-            // You have to read the type data by row,column.
+            // You have to read the type data by row,column. Because the shape is an array of strings, and the strings are the columns.
             var pixelType = shape[j][i];
             
 
@@ -467,11 +623,12 @@ function isRenderFail(a,b,shape)
                 {
                 		return true;
                 }
+
                 // If something there
-                if (readPixel(col,row)!=emptyBlock)
+                if (blocksBoard.readPixel(col,row)!=emptyBlock)
                 {
                 	// and it's not me the current shape rotation
-                	if (self[""+col+","+row]==undefined)
+                	if (!blocksBoard.isReserved(col,row))
                 	{
              
                 		// collision
@@ -521,8 +678,8 @@ if (isRenderFail(cursorA,cursorB,nextShape))
 }
 
 
-remove(cursorA,cursorB,currentShape);
-render(cursorA,cursorB,nextShape);
+blocksBoard.removeGameShape(cursorA,cursorB,currentShape);
+blocksBoard.writeGameShape(cursorA,cursorB,nextShape);
 }
 
 
@@ -530,8 +687,6 @@ render(cursorA,cursorB,nextShape);
 
 function move(a,b,aDiff,bDiff,shape)
 {
-	
-	
 	
 	
     // Error, should not happen.
@@ -557,23 +712,17 @@ function move(a,b,aDiff,bDiff,shape)
     
     
     // Remove it.
-    remove(a,b,shape);
+    blocksBoard.removeGameShape(a,b,shape);
         
     
-    // Draw it again.
-    render(a+aDiff,b+bDiff,shape);
+    // Draw it again moved.
+    blocksBoard.writeGameShape(a+aDiff,b+bDiff,shape);
 	
     // Move was successful.    
     return true;
 }
 
 
-
-function remove(a,b,shape)
-{
-    var clearFlag=true;    
-    render(a,b,shape,clearFlag);
-}
 
 
 
@@ -618,7 +767,7 @@ function checkRow(row)
 {
 	for (var col = 0; col < boardWidth; col++)
 	{
-		if (readPixel(col,row)==emptyBlock)
+		if (blocksBoard.readPixel(col,row)==emptyBlock)
 			return false;
 	}
 
@@ -628,14 +777,13 @@ function checkRow(row)
 // Remove a row
 function removeRow(row)
 {
-	if (row>=boardHeight) return;
+	if (row>=blocksBoard.height) return;
 
 	// Shift everything down one.
-
 	for (; row>=0; row--)
 	{
 
-		for (var col=0; col<boardWidth; col++)
+		for (var col=0; col<blocksBoard.width; col++)
 		{	
 			var style;
 
@@ -645,10 +793,10 @@ function removeRow(row)
 			}	
 			else
 			{
-				style=readPixel(col,row-1);
+				style=blocksBoard.readPixel(col,row-1);
 			}
 		
-			write(col,row,style);
+			blocksBoard.writePixel(col,row,style);
 
 		}
 
@@ -694,62 +842,6 @@ function writeScore(score)
 	caption.innerText="Score: " + score;
 }
 
-// Should return a text value from 1-10 corresponding to cell color styles.
-function readPixel(a,b)
-{
-    var cellClass=table.rows[b].cells[a].className;
-    
-    var pixelType=cellClass.charAt(cellClass.length-1);
-    
-    return pixelType;
-}
-
-
-
-
-// a,b refer to column, row on the board.
-function render(a,b,shape,clear)
-{
-    for (var j=0; j < shape.length; j++)
-    {
-        for (var i=0; i < shape[j].length; i++)
-        {
-            // You have to read the type data by row,column.
-            var pixelType = shape[j][i];
-            
-            if (pixelType!=" ")
-            {
-                var col = a+i;
-                var row = b+j;
-
-                if (col<boardWidth && row<boardHeight)
-                {
-                    if (clear)
-                    {
-                        pixelType=emptyBlock;
-                        	isSelf=undefined;                        
-                    }
-                    else isSelf=true;
-                    
-                    write(col,row,pixelType);
-                    self[""+col+","+row]=isSelf;
-                }
-                
-            }
-           
-
-        }
-
-
-    }
-
-}
-
-
-function write(a,b,pixelType)
-{
-    table.rows[b].cells[a].setAttribute("class","tStyle"+pixelType);
-}
 
 
 
