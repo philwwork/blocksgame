@@ -18,7 +18,7 @@ var dottedBlock=8;
 var emptyBlock=9;
 
 
-
+// The shapeset will be part of the tetradModel object.
 
 // Each string array represents a tetrad shape.
 // Each digit or space in a string array represents a pixel in the shape.
@@ -110,6 +110,87 @@ type6: [shapeSet["6a"],shapeSet["6b"],shapeSet["6c"],shapeSet["6d"]],
 
 type7: [shapeSet["7a"],shapeSet["7b"],shapeSet["7c"],shapeSet["7d"]]
 }
+
+
+
+var tetradModel = Object.create(null);
+tetradModel.shapeDictionary={
+type1: 		[[" 11",
+              "11 "],
+
+	         ["1 ",
+              "11",
+              " 1"]],
+
+type2:      [["2",
+              "2",
+              "2",
+              "2"],
+
+	         ["2222"]],
+
+type3:      [["33 ",
+              " 33"],
+
+             [" 3",
+              "33",
+              "3 "]],
+
+type4:      [[" 4 ",
+              "444"],
+
+ 			 [" 4",
+              "44",
+              " 4"],
+
+			 ["444",
+              " 4 "],
+
+             ["4 ",
+              "44",
+              "4 "]],
+
+type5:      [["55",
+              "55"]],
+
+type6:      [["666",
+              "6  "],
+
+		     ["6 ",
+              "6 ",
+              "66"],
+             
+		     ["  6",
+              "666"],
+             
+             ["66",
+              " 6",
+              " 6"]],
+
+type7:      [["777",
+              "  7"],
+
+			 ["77",
+              "7 ",
+              "7 "],
+
+	      	 ["7  ",
+              "777"],
+
+			 [" 7",
+              " 7",
+              "77"]]
+
+};
+
+
+// lastly I want to convert the idiosyncratic strings into a more traditional form
+// of matrix data to be fed to functions, while maintaining the strings for easy visual tweaking.
+tetradModel.getShape=function(type,rotation)
+{
+	return this.shapeDictionary["type"+type][rotation];
+}
+
 
 var caption = document.getElementById("caption");
 
@@ -226,21 +307,6 @@ blocksBoard.isReserved = function(a,b)
 	return (reserved=="true")
 }
 
-// Definitely need to change this.
-blocksBoard.flushReserved = function()
-{
-	for (var j=0; j < blocksBoard.height; j++)
-	{
-		for (var i=0; i<blocksBoard.width; i++)
-		{
-			var cell=blocksBoard.tableModel.rows[j].cells[i];
-		    cell.setAttribute("reserved","false");
-		}
-	}
-
-
-}
-
 
 blocksBoard.reserveShape=function(a,b,shape)
 {
@@ -291,16 +357,15 @@ blocksBoard.removeGameShape=function(a,b,shape)
 }
 
 
-// Coming replacement for the public variables about cursor movement and shape. 
-var tetradModel=Object.create(null);
-tetradModel.cursorA=0;
-tetradModel.cursorB=0;
-tetradModel.tetradType=1;
-tetradModel.tetradShapeIndex=0;
-tetradModel.getCurrentShape = function()
+// Coming replacement for cursor movement and shape management. 
+var cursorModel=Object.create(null);
+cursorModel.cursorA=0;
+cursorModel.cursorB=0;
+cursorModel.tetradType=1;
+cursorModel.tetradShapeIndex=0;
+cursorModel.getCurrentShape = function()
 {
-	var shapeArray = tetradShapeMap[tetradType];
-	return shapeArray[tetradShapeIndex];
+	tetradModel.getShape(tetradType, tetradShapeIndex);
 }
 
 
@@ -357,10 +422,10 @@ function initTable()
 	if (event.keyCode==39)
     moveTetrad(1,0);
 
-    });
+});
+
 
 }
-
 
 
 function setPreviewBoard()
@@ -542,10 +607,6 @@ function addTetrad()
 
     
     
-    // flush the cache of the previous tetrad if any.
-	// Probably a more efficient way to do it is to just do the most recent tetrad that finished.
-	// blocksBoard.flushReserved();
-	
     
 	// Hook for preview.
     tetradType = "type" + random1to7();
