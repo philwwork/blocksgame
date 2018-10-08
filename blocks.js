@@ -401,7 +401,7 @@ function setPreviewBoard()
 }
 
 
-// Cheat change cursor.
+// Cheat change cursor. They take a penalty of 100.
 function changeCursor()
 {
 	if (paused||over) return;
@@ -410,6 +410,8 @@ function changeCursor()
     
 	shape=cursorModel.getNextType();
 	gameBoard.writeGameShape(cursorModel.cursorA,cursorModel.cursorB,shape);
+	score-=100;
+	writeScore(score);
 }
 
 
