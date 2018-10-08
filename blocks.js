@@ -4,8 +4,6 @@
 
 HTML, CSS, and Javascript programmed by Phillip Walters.*/
 
-var boardWidth=10;
-var boardHeight=20;
 var score=0;
 var started=false;
 
@@ -25,94 +23,6 @@ var emptyBlock=9;
 
 // The digit corresponds to ".tStyleN" in the blocks.css file, where 'N' is the digit.
 // The value of 'N' determines the color (and css) for the pixel.
-var shapeSet={
-"1a":        [" 11",
-              "11 "],
-
-"1b":        ["1 ",
-              "11",
-              " 1"],
-
-"2a":        ["2",
-              "2",
-              "2",
-              "2"],
-
-"2b":        ["2222"],
-
-"3a":        ["33 ",
-              " 33"],
-
-"3b":        [" 3",
-              "33",
-              "3 "],
-
-"4a":       [" 4 ",
-             "444"],
-
-"4b":       [" 4",
-             "44",
-             " 4"],
-
-"4c":       ["444",
-             " 4 "],
-
-"4d":       ["4 ",
-             "44",
-             "4 "],
-
-"5a":       ["55",
-             "55"],
-
-"6a":       ["666",
-             "6  "],
-
-"6b":       ["6 ",
-             "6 ",
-             "66"],
-             
-"6c":       ["  6",
-             "666"],
-             
-"6d":       ["66",
-             " 6",
-             " 6"],
-
-"7a":       ["777",
-             "  7"],
-
-"7b":       ["77",
-             "7 ",
-             "7 "],
-
-"7c":       ["7  ",
-             "777"],
-
-"7d":       [" 7",
-             " 7",
-             "77"]
-
-};
-
-var tetradShapeMap={
-
-type1: [shapeSet["1a"],shapeSet["1b"]],
-
-type2: [shapeSet["2a"],shapeSet["2b"]],
-
-type3: [shapeSet["3a"],shapeSet["3b"]],
-
-type4: [shapeSet["4a"],shapeSet["4b"],shapeSet["4c"],shapeSet["4d"]],
-
-type5: [shapeSet["5a"]],
-
-type6: [shapeSet["6a"],shapeSet["6b"],shapeSet["6c"],shapeSet["6d"]],
-
-type7: [shapeSet["7a"],shapeSet["7b"],shapeSet["7c"],shapeSet["7d"]]
-}
-
-
-
 var tetradModel = Object.create(null);
 tetradModel.shapeDictionary={
 type1: 		[[" 11",
@@ -188,26 +98,12 @@ type7:      [["777",
 // of matrix data to be fed to functions, while maintaining the strings for easy visual tweaking.
 tetradModel.getShape=function(type,rotation)
 {
-	return this.shapeDictionary["type"+type][rotation];
+	return this.shapeDictionary[type][rotation];
 }
 
 
 var caption = document.getElementById("caption");
-
-
-// Global variables maintaining the current tetrad and its current shape.
-var tetradType;
-var tetradShapeIndex;
-
 var over;
-
-
-
-// Global variables maintaining the current tetrad's position.
-var cursorA=0;
-var cursorB=0;
-
-
 
 var boardProto={};
 
@@ -281,44 +177,44 @@ boardProto.writePixel=function(a,b,pixelType)
 
 boardProto.readPixel=function(a,b)
 {
-    var cellClass=blocksBoard.tableModel.rows[b].cells[a].className;
+    var cellClass=this.tableModel.rows[b].cells[a].className;
     var pixelType=cellClass.charAt(cellClass.length-1);
     return pixelType;
 }
 
-var blocksBoard = Object.create(boardProto);
-blocksBoard.tableModel = document.getElementById("board");
-blocksBoard.width=10;
-blocksBoard.height=20;
+var gameBoard = Object.create(boardProto);
+gameBoard.tableModel = document.getElementById("board");
+gameBoard.width=10;
+gameBoard.height=20;
 
-blocksBoard.setReserved = function(a,b,trueOrFalse)
+gameBoard.setReserved = function(a,b,trueOrFalse)
 {
-    var cell=blocksBoard.tableModel.rows[b].cells[a];
+    var cell=gameBoard.tableModel.rows[b].cells[a];
     cell.setAttribute("reserved",trueOrFalse);
 }
 
 // Need this to tell where the tetrad piece is, kind of hard to tell it apart from the other blocks.
 // Reason is so the tetrad doesn't think it's colliding with itself. Might be an easier way to do this.
-blocksBoard.isReserved = function(a,b)
+gameBoard.isReserved = function(a,b)
 {
-	var cell=blocksBoard.tableModel.rows[b].cells[a];
+	var cell=gameBoard.tableModel.rows[b].cells[a];
 	var reserved = cell.getAttribute("reserved");
 
 	return (reserved=="true")
 }
 
 
-blocksBoard.reserveShape=function(a,b,shape)
+gameBoard.reserveShape=function(a,b,shape)
 {
 	this.setReservedShape(a,b,shape,"true");
 }
 
-blocksBoard.unReserveShape=function(a,b,shape)
+gameBoard.unReserveShape=function(a,b,shape)
 {
 	this.setReservedShape(a,b,shape,"false");
 }
 
-blocksBoard.setReservedShape=function(a,b,shape,trueOrFalse)
+gameBoard.setReservedShape=function(a,b,shape,trueOrFalse)
 {
     for (var j=0; j < shape.length; j++)
     {
@@ -333,7 +229,7 @@ blocksBoard.setReservedShape=function(a,b,shape,trueOrFalse)
                 var row = b+j;
 
 				// Legacy? This if test shouldn't be necessary.
-                if (col<boardWidth && row<boardHeight)
+                if (col<gameBoard.width && row< gameBoard.height)
                 {
                     this.setReserved(col,row,trueOrFalse);
                 }
@@ -344,53 +240,111 @@ blocksBoard.setReservedShape=function(a,b,shape,trueOrFalse)
     }
 }
 
-blocksBoard.writeGameShape=function(a,b,shape)
+gameBoard.writeGameShape=function(a,b,shape)
 {
 		this.writeShape(a,b,shape);
 		this.reserveShape(a,b,shape);
 }
 
-blocksBoard.removeGameShape=function(a,b,shape)
+gameBoard.removeGameShape=function(a,b,shape)
 {
 		this.eraseShape(a,b,shape);
 		this.unReserveShape(a,b,shape);
 }
 
 
-// Coming replacement for cursor movement and shape management. 
 var cursorModel=Object.create(null);
 cursorModel.cursorA=0;
 cursorModel.cursorB=0;
-cursorModel.tetradType=1;
+cursorModel.tetradType="type1";
 cursorModel.tetradShapeIndex=0;
 cursorModel.getCurrentShape = function()
 {
-	tetradModel.getShape(tetradType, tetradShapeIndex);
+	return tetradModel.getShape(this.tetradType, this.tetradShapeIndex);
+	
 }
 
 
 
 
+// Get the next tetrad type (and shape 0), only useful for the cheat currently.
+cursorModel.getNextType = function()
+{
+    var typeNumber = Number(this.tetradType.charAt(4));
+    
+    if (typeNumber==7)
+        typeNumber=1;
+    else
+        typeNumber++;
+
+    this.tetradType="type"+typeNumber;
+    this.tetradShapeIndex=0;
+    return this.getCurrentShape();
+}
+
+
+cursorModel.peekNextShape= function()
+{
+	var shapeArray = tetradModel.shapeDictionary[this.tetradType];
+	var tempIndex = this.tetradShapeIndex;
+	if (tempIndex==shapeArray.length-1)
+		tempIndex=0;
+	else
+		tempIndex++;
+	return shapeArray[tempIndex];
+}
+
+cursorModel.getNextShape = function()
+{
+	var shapeArray=tetradModel.shapeDictionary[this.tetradType];
+	if (this.tetradShapeIndex==shapeArray.length-1)
+		this.tetradShapeIndex=0;
+	else
+		this.tetradShapeIndex++;
+
+	return this.getCurrentShape();
+}
+
+cursorModel.isCursor=function(a,b)
+{
+	var shape = this.getCurrentShape();
+
+	if (b<this.cursorB || b>this.cursorB+shape.length-1)
+		return false;
+  	
+	if (a<this.cursorA || a>this.cursorA+shape.length-1)
+		return false;
+
+	
+	a-=this.cursorA;
+	b-=this.cursorB;
+
+	return shape[b][a]!=" ";	
+}
+
+cursorModel.getRandomShape=function()
+{
+	this.tetradType = "type"+random1to7();
+	this.tetradShapeIndex=0;
+
+	return this.getCurrentShape();
+}
 
 
 
 
+window.onload=initGameBoard();
 
 
-
-window.onload=initTable();
-
-
-function initTable()
+function initGameBoard()
 {
 	// rows
-	for (var i=0; i < boardHeight; i++)
+	for (var i=0; i < gameBoard.height; i++)
 	{
-
-		var row = blocksBoard.tableModel.insertRow(i);
+		var row = gameBoard.tableModel.insertRow(i);
 
 		// columns
-		for (var j=0; j<boardWidth; j++)
+		for (var j=0; j<gameBoard.width; j++)
 		{
 			var cell = row.insertCell(j);
 			cell.setAttribute("class", "tStyle"+emptyBlock);
@@ -421,6 +375,10 @@ function initTable()
 	// Right    
 	if (event.keyCode==39)
     moveTetrad(1,0);
+	
+	// Pause
+	if (event.keyCode==32)
+	togglePause();
 
 });
 
@@ -436,48 +394,28 @@ function setPreviewBoard()
 	aBoard.width=4;
 	aBoard.height=4;
 
-	shape = getCurrentShape();
+	shape = cursorModel.getCurrentShape();
 
 	aBoard.fill(8);
 	aBoard.writeShape(0,0,shape);
 }
 
 
+// Cheat change cursor.
 function changeCursor()
 {
-	var shape = getCurrentShape();
-    blocksBoard.removeGameShape(cursorA,cursorB,shape);
+	if (paused||over) return;
+	var shape = cursorModel.getCurrentShape();
+    gameBoard.removeGameShape(cursorModel.cursorA,cursorModel.cursorB,shape);
     
-    var tetradIndex = tetradType.charAt(4);
-    tetradIndex = Number(tetradIndex);
-    
-    if (tetradIndex==7)
-        tetradIndex=1;
-    else
-        tetradIndex++;
-
-    
-    tetradType="type"+tetradIndex;
-    tetradShapeIndex=0;
-    shape = getCurrentShape();
-
-
-	blocksBoard.writeGameShape(cursorA,cursorB,shape);
+	shape=cursorModel.getNextType();
+	gameBoard.writeGameShape(cursorModel.cursorA,cursorModel.cursorB,shape);
 }
-
-
 
 
 function random1to7()
 {
 	return Math.floor(Math.random()*7)+1;
-}
-
-
-function getCurrentShape()
-{
-	var shapeArray = tetradShapeMap[tetradType];
-	return shapeArray[tetradShapeIndex];
 }
 
 
@@ -490,8 +428,10 @@ function no()
 }
 
 
+var paused=false;
+
+
 // Function to get the process started.
-// This will need to be changed to something more elegant.
 function startGame(event)
 {
 
@@ -501,7 +441,10 @@ function startGame(event)
 
 	// They keep clicking on it, ignore.
 	if (started)
+	{
+		togglePause();
 		return;
+	}
 
 	// Let's do this.
 	started=true;
@@ -524,7 +467,14 @@ function startGame(event)
 		start happening faster and faster. What is needed is a predictable increase in speed based on total elapsed time. 
 	**/
     var mainThread = function () {
-	
+
+	if (paused)
+	{
+			// 20 ms pause.
+			setTimeout(mainThread,20);
+			return;
+	}	
+
 	ticks++;
 
 	// Adjust the speed about every 20 ticks of 800ms, however the 800ms declines and eventually you are adjusting the speed much faster.
@@ -541,14 +491,14 @@ function startGame(event)
 	}	
 		
 	// Get the current shape (it could be rotated by the user's choice).
-    var shape=getCurrentShape();
+    var shape=cursorModel.getCurrentShape();
 	
 	// Prepare to move it down.	
 	
 	// Something is in the way, this one is part of the pile now.	
-	if (isRenderFail(cursorA,(cursorB+1),shape))
+	if (isRenderFail(cursorModel.cursorA,(cursorModel.cursorB+1),shape))
 	{
-		blocksBoard.unReserveShape(cursorA,cursorB,shape);
+		gameBoard.unReserveShape(cursorModel.cursorA,cursorModel.cursorB,shape);
 
 
 		if (!over)
@@ -602,8 +552,8 @@ function addTetrad()
 	}
 	
 	// Let's put it about here.
-    cursorA=5;
-    cursorB=0;
+    var tempA=5;
+    var tempB=0;
 
     
     
@@ -611,11 +561,11 @@ function addTetrad()
 	// Hook for preview.
     tetradType = "type" + random1to7();
     tetradShapeIndex = 0;
-	var shape=getCurrentShape();
+	var shape=cursorModel.getRandomShape();
 
-    
+
 	// If the first thing that happens when you put a new tetrad out is a renderfail, that's game.
-    if (isRenderFail(cursorA,cursorB,shape))
+    if (isRenderFail(tempA,tempB, shape) )
     {
     	gameOver();
     	return;
@@ -625,7 +575,9 @@ function addTetrad()
     setPreviewBoard();
 
 	// Do it.	
-    blocksBoard.writeGameShape(cursorA,cursorB,shape);    
+	cursorModel.cursorA=tempA;
+	cursorModel.cursorB=tempB;
+    gameBoard.writeGameShape(tempA,tempB,shape);    
 }
 
 // It is what it is.
@@ -636,33 +588,27 @@ function gameOver()
 }
 
 
-function moveTetrad(a,b)
+function moveTetrad(aDiff,bDiff)
 {
-    var shape = getCurrentShape();
+	if (paused || over)
+	return;
+
+    var shape = cursorModel.getCurrentShape();
  
-    var success = move(cursorA,cursorB,a,b,shape);
+    var success = move(cursorModel.cursorA,cursorModel.cursorB,aDiff,bDiff,shape);
     
     
     if (success)
     {
-        cursorA+=a;
-        cursorB+=b;
+        cursorModel.cursorA+=aDiff;
+        cursorModel.cursorB+=bDiff;
     } 
 }
 
 // Test if the shape will fit on the board.
 function isRenderFail(a,b,shape)
 {
-    if (a>=boardWidth || b >=boardHeight) 
-	{
-		return true;
-	}
 
-
-	if (a<0 || b<0) 
-	{
-		return true;
-	}
 
 	
 	for (var j=0; j < shape.length; j++)
@@ -680,16 +626,16 @@ function isRenderFail(a,b,shape)
                 row = b+j;
     
                 
-                if (col>=boardWidth || row>=boardHeight) 
+                if (col>=gameBoard.width || row>=gameBoard.height) 
                 {
                 		return true;
                 }
 
                 // If something there
-                if (blocksBoard.readPixel(col,row)!=emptyBlock)
+                if (gameBoard.readPixel(col,row)!=emptyBlock)
                 {
                 	// and it's not me the current shape rotation
-                	if (!blocksBoard.isReserved(col,row))
+                	if (!gameBoard.isReserved(col,row))
                 	{
              
                 		// collision
@@ -717,30 +663,14 @@ tetradShapeIndex represents the current rotation of the tetrad in play.
 */
 function rotateCurrent()
 {
-var shapeArray = tetradShapeMap[tetradType];
-var currentShape = getCurrentShape();
 
-// get the next shape rotation.
-var nextShape;
-if (tetradShapeIndex==shapeArray.length-1)
-    tetradShapeIndex=0;
-else
-    tetradShapeIndex++;
+	if (paused||over) return;
 
-nextShape=shapeArray[tetradShapeIndex];
-if (isRenderFail(cursorA,cursorB,nextShape))
-{
-	// undo the progression to the next shape.
-	if (tetradShapeIndex==0)
-		tetradShapeIndex=shapeArray.length-1;
-	else
-		tetradShapeIndex--;
-	return;	
-}
+	if (isRenderFail(cursorModel.cursorA,cursorModel.cursorB,cursorModel.peekNextShape()))
+		return;	
 
-
-blocksBoard.removeGameShape(cursorA,cursorB,currentShape);
-blocksBoard.writeGameShape(cursorA,cursorB,nextShape);
+	gameBoard.removeGameShape(cursorModel.cursorA,cursorModel.cursorB,cursorModel.getCurrentShape());
+	gameBoard.writeGameShape(cursorModel.cursorA,cursorModel.cursorB,cursorModel.getNextShape());
 }
 
 
@@ -748,23 +678,9 @@ blocksBoard.writeGameShape(cursorA,cursorB,nextShape);
 
 function move(a,b,aDiff,bDiff,shape)
 {
-	
-	
-    // Error, should not happen.
-    if (a <0 || b < 0)
-    {
-        console.log("Error: cannot use negative values for current tetrad cursor.");
-        return false;    
-    }
 
-    if (a>=boardWidth || b >=boardHeight)
-    {
-        console.log("Error: cannot move tetrad cursor to greater than width or height.");
-        return false;
-    }
-
-
-    
+	if (a+aDiff<0)
+		return false;
 
     if (isRenderFail(a+aDiff,b+bDiff,shape))
     {
@@ -773,11 +689,11 @@ function move(a,b,aDiff,bDiff,shape)
     
     
     // Remove it.
-    blocksBoard.removeGameShape(a,b,shape);
+    gameBoard.removeGameShape(a,b,shape);
         
     
     // Draw it again moved.
-    blocksBoard.writeGameShape(a+aDiff,b+bDiff,shape);
+    gameBoard.writeGameShape(a+aDiff,b+bDiff,shape);
 	
     // Move was successful.    
     return true;
@@ -792,12 +708,12 @@ function move(a,b,aDiff,bDiff,shape)
 function checkCompleteRow()
 {
 
-var currentShape = getCurrentShape();
+var currentShape = cursorModel.getCurrentShape();
 
 
 
-var startingRow = cursorB + currentShape.length-1;
-var numRows=currentShape.length;
+var startingRow = cursorModel.cursorB + currentShape.length-1;
+var numRows=cursorModel.getCurrentShape().length;
 
 var scoreRows=0;
 
@@ -826,9 +742,9 @@ if (scoreRows>0)
 // Return true if solid row.
 function checkRow(row)
 {
-	for (var col = 0; col < boardWidth; col++)
+	for (var col = 0; col < gameBoard.width; col++)
 	{
-		if (blocksBoard.readPixel(col,row)==emptyBlock)
+		if (gameBoard.readPixel(col,row)==emptyBlock)
 			return false;
 	}
 
@@ -838,13 +754,13 @@ function checkRow(row)
 // Remove a row
 function removeRow(row)
 {
-	if (row>=blocksBoard.height) return;
+	if (row>=gameBoard.height) return;
 
 	// Shift everything down one.
 	for (; row>=0; row--)
 	{
 
-		for (var col=0; col<blocksBoard.width; col++)
+		for (var col=0; col<gameBoard.width; col++)
 		{	
 			var style;
 
@@ -854,10 +770,10 @@ function removeRow(row)
 			}	
 			else
 			{
-				style=blocksBoard.readPixel(col,row-1);
+				style=gameBoard.readPixel(col,row-1);
 			}
 		
-			blocksBoard.writePixel(col,row,style);
+			gameBoard.writePixel(col,row,style);
 
 		}
 
@@ -903,6 +819,21 @@ function writeScore(score)
 	caption.innerText="Score: " + score;
 }
 
+function togglePause()
+{
+	if (over) return;
 
+	if (paused)
+	{
+		writeScore(score);
+		paused=false;
+	}
+
+	else
+	{
+		caption.innerText="Paused: " + score;
+		paused=true;
+	}
+}
 
 
