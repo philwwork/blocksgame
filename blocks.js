@@ -426,8 +426,6 @@ function initGameBoard()
 
 function setPreviewBoards()
 {
-	// The boards have a reversed direction relative to the queue.
-	var j=3;
 	for (var i=1; i<5; i++)
 	{	
 		previewBoards[i] = Object.create(boardProto);
@@ -435,13 +433,6 @@ function setPreviewBoards()
 		previewBoards[i].tableModel = document.getElementById("typeBoard"+i);
 	    previewBoards[i].width=4;
 		previewBoards[i].height=4;
-
-		var shapeType= cursorModel.typeQueue[j];
-		var shape=tetradModel.getShape(shapeType,0);
-
-		previewBoards[i].fill(8);
-		previewBoards[i].writeShape(0,0,shape);
-		j--;
 	}
 }
 
