@@ -16,6 +16,10 @@ var dottedBlock=8;
 var emptyBlock=9;
 
 
+
+
+
+
 // The shapeset will be part of the tetradModel object.
 
 // Each string array represents a tetrad shape.
@@ -182,6 +186,9 @@ boardProto.readPixel=function(a,b)
     return pixelType;
 }
 
+var previewBoards = [];
+
+
 var gameBoard = Object.create(boardProto);
 gameBoard.tableModel = document.getElementById("board");
 gameBoard.width=10;
@@ -200,7 +207,7 @@ gameBoard.isReserved = function(a,b)
 	var cell=gameBoard.tableModel.rows[b].cells[a];
 	var reserved = cell.getAttribute("reserved");
 
-	return (reserved=="true")
+	return (reserved=="true");
 }
 
 
@@ -258,16 +265,14 @@ cursorModel.cursorA=0;
 cursorModel.cursorB=0;
 cursorModel.tetradType="type1";
 cursorModel.tetradShapeIndex=0;
+cursorModel.typeQueue=[];
 cursorModel.getCurrentShape = function()
 {
-	return tetradModel.getShape(this.tetradType, this.tetradShapeIndex);
-	
+	return tetradModel.getShape(this.tetradType, this.tetradShapeIndex);	
 }
 
 
-
-
-// Get the next tetrad type (and shape 0), only useful for the cheat currently.
+// Get the next tetrad type in order (and shape 0), only useful for the cheat currently.
 cursorModel.getNextType = function()
 {
     var typeNumber = Number(this.tetradType.charAt(4));
@@ -322,15 +327,45 @@ cursorModel.isCursor=function(a,b)
 	return shape[b][a]!=" ";	
 }
 
-cursorModel.getRandomShape=function()
+// This should be getNextRandomType()
+cursorModel.getNextRandomType=function()
 {
-	this.tetradType = "type"+random1to7();
+	this.tetradType = this.getTypeFromQueue();	
 	this.tetradShapeIndex=0;
 
 	return this.getCurrentShape();
 }
 
+cursorModel.initTypeQueue = function()
+{
+	var initialTypeQueue=[];
+	for (var i=0; i<4; i++)
+	{
+		initialTypeQueue[i]="type"+random1to7();
+	}
+	return initialTypeQueue;
+}
 
+cursorModel.typeQueue=cursorModel.initTypeQueue();
+
+
+cursorModel.getTypeFromQueue=function()
+{
+	var dequeue=this.typeQueue.pop();
+
+	var newQueue=[];
+	newQueue.push("type"+random1to7());
+	for (var i=0; i<3; i++)	
+	{
+		newQueue.push(this.typeQueue[i]);
+	}
+	
+	this.typeQueue=newQueue;
+	
+	console.log(newQueue);
+
+	return dequeue;
+}
 
 
 window.onload=initGameBoard();
@@ -338,6 +373,8 @@ window.onload=initGameBoard();
 
 function initGameBoard()
 {
+	setPreviewBoards();
+
 	// rows
 	for (var i=0; i < gameBoard.height; i++)
 	{
@@ -386,18 +423,41 @@ function initGameBoard()
 }
 
 
-function setPreviewBoard()
+
+function setPreviewBoards()
 {
-	var aBoard= Object.create(boardProto);
+	// The boards have a reversed direction relative to the queue.
+	var j=3;
+	for (var i=1; i<5; i++)
+	{	
+		previewBoards[i] = Object.create(boardProto);
 
-	aBoard.tableModel=document.getElementById("typeBoard");
-	aBoard.width=4;
-	aBoard.height=4;
+		previewBoards[i].tableModel = document.getElementById("typeBoard"+i);
+	    previewBoards[i].width=4;
+		previewBoards[i].height=4;
 
-	shape = cursorModel.getCurrentShape();
+		var shapeType= cursorModel.typeQueue[j];
+		var shape=tetradModel.getShape(shapeType,0);
 
-	aBoard.fill(8);
-	aBoard.writeShape(0,0,shape);
+		previewBoards[i].fill(8);
+		previewBoards[i].writeShape(0,0,shape);
+		j--;
+	}
+}
+
+
+function updatePreviewBoards()
+{
+	var j=3;
+	var shape;
+	for (var i=1; i<5; i++)
+	{	
+		var shape = tetradModel.getShape(cursorModel.typeQueue[j],0);
+		previewBoards[i].fill(8);
+		previewBoards[i].writeShape(0,0,shape);
+					
+		j--;		
+	}
 }
 
 
@@ -437,11 +497,11 @@ var paused=false;
 function startGame(event)
 {
 
-	// Stop the "no really" message from clicking on the table, from also happening.
+	// Stop the "no really" message that happens when clicking on the table first, from also happening.
 	event.stopPropagation();
 
 
-	// They keep clicking on it, ignore.
+	// They keep clicking on it, pause/unpause.
 	if (started)
 	{
 		togglePause();
@@ -451,8 +511,6 @@ function startGame(event)
 	// Let's do this.
 	started=true;
 	writeScore(0);
-
-
 		
 
 	addTetrad();
@@ -474,7 +532,7 @@ function startGame(event)
 	{
 			// 20 ms pause.
 			setTimeout(mainThread,20);
-			return;
+			return;s
 	}	
 
 	ticks++;
@@ -516,9 +574,6 @@ function startGame(event)
 			setTimeout(mainThread,delay);
 			return;
 		}
-
-		// This doesn't make any sense. If it's game over by now then gameOver() was already called.
-		gameOver();
 	}
 
 	// Move it down.
@@ -546,6 +601,7 @@ function startGame(event)
 */
 function addTetrad()
 {
+
 	// Is this needed?
 	if (over)
 	{
@@ -563,7 +619,7 @@ function addTetrad()
 	// Hook for preview.
     tetradType = "type" + random1to7();
     tetradShapeIndex = 0;
-	var shape=cursorModel.getRandomShape();
+	var shape=cursorModel.getNextRandomType();
 
 
 	// If the first thing that happens when you put a new tetrad out is a renderfail, that's game.
@@ -573,13 +629,13 @@ function addTetrad()
     	return;
     }
     
-	// messing with the preview board.
-    setPreviewBoard();
+    updatePreviewBoards();    
 
 	// Do it.	
 	cursorModel.cursorA=tempA;
 	cursorModel.cursorB=tempB;
-    gameBoard.writeGameShape(tempA,tempB,shape);    
+
+    gameBoard.writeGameShape(tempA,tempB,shape);
 }
 
 // It is what it is.
