@@ -287,6 +287,18 @@ cursorModel.getNextType = function()
     return this.getCurrentShape();
 }
 
+// Get the next tetrad type in order (and shape 0), without changing it.
+cursorModel.peekNextType = function()
+{
+    var typeNumber = Number(this.tetradType.charAt(4));
+    
+    if (typeNumber==7)
+        typeNumber=1;
+    else
+        typeNumber++;
+
+	return tetradModel.getShape("type"+typeNumber, 0);
+}
 
 cursorModel.peekNextShape= function()
 {
@@ -361,8 +373,6 @@ cursorModel.getTypeFromQueue=function()
 	}
 	
 	this.typeQueue=newQueue;
-	
-	console.log(newQueue);
 
 	return dequeue;
 }
@@ -456,13 +466,18 @@ function updatePreviewBoards()
 function changeCursor()
 {
 	if (paused||over) return;
-	var shape = cursorModel.getCurrentShape();
-    gameBoard.removeGameShape(cursorModel.cursorA,cursorModel.cursorB,shape);
-    
-	shape=cursorModel.getNextType();
-	gameBoard.writeGameShape(cursorModel.cursorA,cursorModel.cursorB,shape);
-	score-=50;
-	writeScore(score);
+	   
+	if (!isRenderFail(cursorModel.cursorA,cursorModel.cursorB, cursorModel.peekNextType()))
+	{
+		var shape = cursorModel.getCurrentShape();
+		gameBoard.removeGameShape(cursorModel.cursorA,cursorModel.cursorB,shape);
+
+		var newShape=cursorModel.getNextType();	    
+		gameBoard.writeGameShape(cursorModel.cursorA,cursorModel.cursorB,newShape);
+
+		score-=50;
+		writeScore(score);
+	}	
 }
 
 
