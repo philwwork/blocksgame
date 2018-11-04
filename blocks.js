@@ -490,8 +490,7 @@ function random1to7()
 
 function no()
 {
-	if (started)
-		return;
+	if (started) { togglePause(); return; }
 	caption.innerText="No really, click here.";
 }
 
@@ -503,7 +502,7 @@ var paused=false;
 function startGame(event)
 {
 
-	// Stop the "no really" message that happens when clicking on the table first, from also happening.
+	// Prevent the "no really" message that happens when clicking on the table first, from also happening.
 	event.stopPropagation();
 
 
@@ -523,39 +522,43 @@ function startGame(event)
 
 	
     var delay = 800;
-    var ticks=0;
 
-    
-    
-    /**
-		Some changes are needed for the timing. The speed takes a while to increase, but when it does it increasingly increases at a rapid pace.
-		This is because the ticks keep getting smaller in size, and the speed increases with each tick. So towards the end the speed increases 
-		start happening faster and faster. What is needed is a predictable increase in speed based on total elapsed time. 
-	**/
-    var mainThread = function () {
+	// Every 7000 ms make it faster.
+	var timerChangeThread = function() {
+	
+			if (paused)
+			{
+				setTimeout(timerChangeThread,20);
+				return;
+			}
 
-	if (paused)
+			if (delay>20)
+			{
+				delay-=20;
+				console.log(delay);
+			}
+
+			setTimeout(timerChangeThread,7000);
+	}
+
+	
+	var mainGameThread = function () 
 	{
-			// 20 ms pause.
-			setTimeout(mainThread,20);
-			return;s
-	}	
-
-	ticks++;
-
-	// Adjust the speed about every 20 ticks of 800ms, however the 800ms declines and eventually you are adjusting the speed much faster.
-	if (ticks>20)
-	{
-		ticks=0;
-		
-		// Stop making it faster at 20ms
-		if (delay>=20)
+		if (paused)
 		{
-			// Otherwise remove 20ms at a time.
-			delay-=20;
+			// Redo pause test every 20ms
+			setTimeout(mainGameThread,20);
+			return;
 		}	
-	}	
-		
+
+		if (over)
+		{
+			// no more thread repetition.
+			return;
+		}
+
+
+	
 	// Get the current shape (it could be rotated by the user's choice).
     var shape=cursorModel.getCurrentShape();
 	
@@ -566,20 +569,16 @@ function startGame(event)
 	{
 		gameBoard.unReserveShape(cursorModel.cursorA,cursorModel.cursorB,shape);
 
+		// Score some block rows, and update the gui if applicable.
+		checkCompleteRow();
+		
 
-		if (!over)
-		{
-			// Score some block rows, and update the gui if applicable.
-			checkCompleteRow();
-			
-
-			// Start over with another piece.
-			addTetrad();
-			
-			// repeat the main thread next tick.						
-			setTimeout(mainThread,delay);
-			return;
-		}
+		// Start over with another piece.
+		addTetrad();
+		
+		// repeat the main thread next tick.						
+		setTimeout(mainGameThread,delay);
+		return;
 	}
 
 	// Move it down.
@@ -588,7 +587,7 @@ function startGame(event)
 		moveTetrad(0,1);
 
 		// repeat the main thread next tick.
-		setTimeout(mainThread,delay);
+		setTimeout(mainGameThread,delay);
 	
 	}
 	
@@ -596,7 +595,17 @@ function startGame(event)
 	};
 	
 	// Start the timer and the main thread.
-	setTimeout(mainThread,delay);
+	setTimeout(mainGameThread,delay);
+	setTimeout(timerChangeThread,7000);
+	
+
+
+	
+
+
+
+
+
 }
 
 
