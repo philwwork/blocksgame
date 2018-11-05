@@ -27,7 +27,7 @@ var emptyBlock=9;
 
 // The digit corresponds to ".tStyleN" in the blocks.css file, where 'N' is the digit.
 // The value of 'N' determines the color (and css) for the pixel.
-var tetradModel = Object.create(null);
+var tetradModel = Object.create(null);0
 tetradModel.shapeDictionary={
 type1: 		[[" 11",
               "11 "],
@@ -465,7 +465,7 @@ function updatePreviewBoards()
 // Cheat change cursor. They take a penalty of 50.
 function changeCursor()
 {
-	if (paused||over) return;
+	if (paused||over|| !started) return;
 	   
 	if (!isRenderFail(cursorModel.cursorA,cursorModel.cursorB, cursorModel.peekNextType()))
 	{
