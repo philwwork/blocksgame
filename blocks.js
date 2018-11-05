@@ -894,7 +894,7 @@ function writeScore(score)
 
 function togglePause()
 {
-	if (over) return;
+	if (over || !started) return;
 
 	if (paused)
 	{
